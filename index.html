@@ -587,7 +587,18 @@ function authSendReset(email) {
   btn.disabled = true; btn.textContent = 'Sending…';
   err.style.display = 'none'; ok.style.display = 'none';
 
-  fetch(SB_URL + '/auth/v1/recover', {
+  // Tell Supabase to send the reset link back to THIS site. Without it the link
+  // falls back to the project-wide Site URL, which is shared by all six PortCo
+  // workbooks, so a user can land on another company's site or on a page that
+  // does not exist. This address must also be listed under Authentication >
+  // URL Configuration > Redirect URLs in Supabase, or it is ignored.
+  var returnTo = '';
+  if (/^https?:$/.test(window.location.protocol) && window.location.origin && window.location.origin !== 'null') {
+    returnTo = window.location.origin + window.location.pathname;
+  }
+  var recoverUrl = SB_URL + '/auth/v1/recover' + (returnTo ? '?redirect_to=' + encodeURIComponent(returnTo) : '');
+
+  fetch(recoverUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
     body: JSON.stringify({ email: email })
